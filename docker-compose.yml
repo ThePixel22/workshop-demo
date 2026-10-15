@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-demoDb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/workshop-postgresql.sql:/docker-entrypoint-initdb.d/01-create-tables.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  member-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: member-service
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-demoDb}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDEMPTION_SERVICE_URL: http://redemption-service:8062
+    ports:
+      - "${MEMBER_SERVICE_PORT:-8061}:8061"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redemption-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: redemption-service
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-demoDb}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      MEMBER_SERVICE_URL: http://member-service:8061
+    ports:
+      - "${REDEMPTION_SERVICE_PORT:-8062}:8062"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
