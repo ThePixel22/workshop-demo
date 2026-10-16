@@ -17,6 +17,19 @@ services:
       timeout: 5s
       retries: 10
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.6
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
   member-service:
     build:
       context: .
@@ -28,6 +41,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-demoDb}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      ELASTIC_URL: http://elasticsearch:9200
       REDEMPTION_SERVICE_URL: http://redemption-service:8062
     ports:
       - "${MEMBER_SERVICE_PORT:-8061}:8061"
@@ -46,6 +60,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-demoDb}
       DB_USERNAME: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      ELASTIC_URL: http://elasticsearch:9200
       MEMBER_SERVICE_URL: http://member-service:8061
     ports:
       - "${REDEMPTION_SERVICE_PORT:-8062}:8062"
@@ -55,3 +70,4 @@ services:
 
 volumes:
   postgres-data:
+  es_data:

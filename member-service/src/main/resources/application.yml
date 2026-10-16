@@ -14,6 +14,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
+  elasticsearch:
+    uris: ${ELASTIC_URL:http://localhost:9200}
 logging:
   level:
     com.company.member: DEBUG
