@@ -9,6 +9,9 @@ import com.company.member.dto.MemberResponse;
 import com.company.member.dto.RedemptionSummaryDTO;
 import com.company.member.dto.UpdateBalanceRequest;
 import com.company.member.dto.UpdateBalanceResponse;
+import com.company.member.elasticsearch.document.MemberDocument;
+import com.company.member.elasticsearch.mapper.MemberDocumentMapper;
+import com.company.member.elasticsearch.repository.MemberSearchRepository;
 import com.company.member.entity.Member;
 import com.company.member.entity.NightBalance;
 import com.company.member.exception.DuplicateEmailException;
@@ -37,6 +40,9 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final NightBalanceRepository nightBalanceRepository;
     private final RedemptionServiceClient redemptionServiceClient;
+
+    private final MemberSearchRepository memberSearchRepository;
+    private final MemberDocumentMapper memberDocumentMapper;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
@@ -70,6 +76,9 @@ public class MemberService {
             nightBalance.setAvailableNights(5);
 
             nightBalanceRepository.save(nightBalance);
+
+            MemberDocument memberDocument = memberDocumentMapper.toDocument(savedMember);
+            memberSearchRepository.save(memberDocument);
 
             return new CreateMemberResponse(savedMember.getMemberId());
         } catch (Exception e) {
