@@ -3,6 +3,9 @@ package com.company.member.service;
 import com.company.member.client.RedemptionServiceClient;
 import com.company.member.dto.CreateMemberRequest;
 import com.company.member.dto.CreateMemberResponse;
+import com.company.member.elasticsearch.document.MemberDocument;
+import com.company.member.elasticsearch.mapper.MemberDocumentMapper;
+import com.company.member.elasticsearch.repository.MemberSearchRepository;
 import com.company.member.entity.Member;
 import com.company.member.entity.MemberStatus;
 import com.company.member.entity.MembershipTier;
@@ -42,11 +45,15 @@ class MemberServiceCreateMemberTest {
     @Mock
     private RedemptionServiceClient redemptionServiceClient;
 
+    @Mock
+    private MemberSearchRepository memberSearchRepository;
+
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
-        memberService = new MemberService(memberRepository, nightBalanceRepository, redemptionServiceClient);
+        memberService = new MemberService(memberRepository, nightBalanceRepository, redemptionServiceClient,
+                memberSearchRepository, new MemberDocumentMapper());
     }
 
     @Test
@@ -74,6 +81,10 @@ class MemberServiceCreateMemberTest {
         verify(nightBalanceRepository).save(balanceCaptor.capture());
         assertThat(balanceCaptor.getValue().getMemberId()).isEqualTo(101L);
         assertThat(balanceCaptor.getValue().getAvailableNights()).isEqualTo(5);
+        ArgumentCaptor<MemberDocument> documentCaptor = ArgumentCaptor.forClass(MemberDocument.class);
+        verify(memberSearchRepository).save(documentCaptor.capture());
+        assertThat(documentCaptor.getValue().getMemberId()).isEqualTo(101L);
+        assertThat(documentCaptor.getValue().getEmail()).isEqualTo(request.getEmail());
         assertThat(response.getMemberId()).isEqualTo(101L);
     }
 

@@ -32,7 +32,7 @@ volume and run the initialization script again, use `docker compose down -v`.
 
 Prerequisites:
 
-- JDK 17+
+- JDK 21 (both services target Java 21)
 - Maven 3.9+
 - PostgreSQL 15+
 
