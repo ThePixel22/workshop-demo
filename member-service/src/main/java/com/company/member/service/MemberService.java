@@ -26,11 +26,16 @@ import com.company.member.repository.NightBalanceRepository;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +89,21 @@ public class MemberService {
         } catch (Exception e) {
             throw new MemberCreationException("Failed to create member: " + e.getMessage(), e);
         }
+    }
+
+    public List<MemberDocument> getAll() {
+        return StreamSupport
+                .stream(memberSearchRepository.findAll().spliterator(), false)
+                .toList();
+    }
+
+    public Page<MemberDocument> search(String textSearch) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "tier"));
+        return memberSearchRepository.searchByKeyword(textSearch, pageable);
+    }
+
+    public List<MemberDocument> searchByName(String searchName) {
+        return memberSearchRepository.findByNameContaining(searchName);
     }
 
     public MemberResponse getMemberById(Long memberId) {
